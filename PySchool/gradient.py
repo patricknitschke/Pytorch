@@ -146,5 +146,59 @@ def torch():
             [w, b] = model.parameters()
             print(f"epoch {epoch+1}: w = {w[0][0]}, loss = {l:.8f}")
 
+def torch_custom():
+    import torch as th
+    import torch.nn as nn
+
+    X = th.tensor([1,2,3,4], dtype=th.float32).view(4,1)
+    Y = th.tensor([1,2,3,4], dtype=th.float32).view(4,1)
+
+    X_test = th.tensor([5], dtype=th.float32)
+    
+    n_samples, n_features = X.shape
+
+    input_size = n_features
+    output_size = n_features
+
+    #model = nn.Linear(input_size, output_size, dtype=th.float32)
+    
+    class LinearRegression(nn.Module):
+        
+        def __init__(self, input_dim, output_dim) -> None:
+            super(LinearRegression, self).__init__()
+
+            self.lin = nn.Linear(input_dim, output_dim)
+        
+        def forward(self, x):
+            return self.lin(x)
+
+    model = LinearRegression(input_size, output_size)
+
+    # Training
+    learning_rate = 0.05
+    epochs = 50
+
+    loss = nn.MSELoss()
+    optimiser = th.optim.SGD(model.parameters(), lr=learning_rate)
+
+    print(f"Prediction before training: f(5) = {model(X_test).item():.3f}")
+    for epoch in range(epochs):
+        
+        # Forward
+        y_hat = model(X)
+        l = loss(Y, y_hat)
+
+        # Gradient
+        l.backward()
+
+        # Update
+        optimiser.step()
+        optimiser.zero_grad()
+
+        # Log
+        if epoch % 1 == 0:
+            [w, b] = model.parameters()
+            print(f"epoch {epoch+1}: w = {w[0][0]}, loss = {l:.8f}")
+
 if __name__ == '__main__':
-    torch()
+    torch_custom()
