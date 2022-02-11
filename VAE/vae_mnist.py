@@ -162,7 +162,7 @@ with th.no_grad():
         x = x.to(device)
         
         x_hat, _, _ = model(x)
-        x_hat_batch = (x_hat)
+        x_hat_batch = x_hat
         break
 
 for i in range(6):
