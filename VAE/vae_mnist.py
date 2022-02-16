@@ -15,10 +15,10 @@ print(device)
 
 # Hyper-parameters 
 input_size = 784 # 28x28
-hidden_size = 400
-latent_dim = 50 
+hidden_size = 200
+latent_dim = 100
 num_classes = 10
-num_epochs = 3
+num_epochs = 1
 batch_size = 100
 learning_rate = 1e-3
 
@@ -26,13 +26,13 @@ mnist_transform = transforms.Compose([
         transforms.ToTensor(),
 ])
 
-# MNIST dataset 
-train_dataset = torchvision.datasets.MNIST(root='./data', 
+# FashionMNIST dataset 
+train_dataset = torchvision.datasets.FashionMNIST(root='./data', 
                                            train=True, 
                                            transform=mnist_transform,  
                                            download=True)
 
-test_dataset = torchvision.datasets.MNIST(root='./data', 
+test_dataset = torchvision.datasets.FashionMNIST(root='./data', 
                                           train=False, 
                                           transform=mnist_transform)
 
@@ -110,13 +110,15 @@ model = Model(Encoder=encoder, Decoder=decoder).to(device)
 
 # Define Loss function
 
-BCE_loss = nn.BCELoss()
-
 def loss_function(x, x_hat, mean, log_var):
-    reproduction_loss = nn.functional.binary_cross_entropy(x_hat, x, reduction='sum')
+    reproduction_loss = nn.BCELoss(reduction='sum')(x_hat, x)
     KLD      = - 0.5 * th.sum(1+ log_var - mean.pow(2) - log_var.exp())
 
     return reproduction_loss + KLD
+
+# def loss_function(x, x_hat, mean, log_var):
+#     kl_divergence = 0.5 * th.sum(1 + log_var - mean.pow(2) - log_var.exp())
+#     return nn.functional.mse_loss(x_hat, x, reduction="sum") - kl_divergence
 
 optimizer = Adam(model.parameters(), lr=learning_rate)
 
@@ -146,27 +148,22 @@ print("Finish!!")
 
 # Evaluation
 model.eval()
-
-examples = iter(test_loader)
-example_batch1, _ = examples.next()
-
-for i in range(6):
-    plt.subplot(2,3,i+1)
-    plt.imshow(example_batch1[i][0], cmap='gray')
-plt.show()
-
-x_hat_batch = []
 with th.no_grad():
-    for batch_idx, (x, _) in enumerate(tqdm(test_loader)):
-        x = x.view(batch_size, input_size)
-        x = x.to(device)
-        
-        x_hat, _, _ = model(x)
-        x_hat_batch = x_hat
-        break
+    test_loader = iter(test_loader)
+    x, _ = test_loader.next()
+    x = x.view(batch_size, input_size)
+    x = x.to(device)
+    
+    x_hat, _, _ = model(x)
+    x_hat_batch = x_hat
 
-for i in range(6):
-    plt.subplot(2,3,i+1)
-    plt.imshow(x_hat_batch[i].view(28,28), cmap='gray')
-plt.show()
+    for i in range(6):
+        plt.subplot(2,3,i+1)
+        plt.imshow(x[i].view(28,28), cmap='gray')
+    plt.show()
+
+    for i in range(6):
+        plt.subplot(2,3,i+1)
+        plt.imshow(x_hat_batch[i].view(28,28), cmap='gray')
+    plt.show()
 
