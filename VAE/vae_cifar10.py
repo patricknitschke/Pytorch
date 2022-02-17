@@ -12,18 +12,23 @@ import math
 from tqdm import tqdm
 from torch.utils.tensorboard import SummaryWriter
 
+#
+#
+# Updated version in vae_cifar10.ipynb 
+#
+#
+
 writer = SummaryWriter('runs/vae_cifar10')
 
 # Device configuration
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-print(device)
 
 # Hyper-parameters 
 input_size = 32*32 # 32x32
 hidden_dim = 16
 latent_dim = 50 
 num_classes = 10
-num_epochs = 1
+num_epochs = 5
 batch_size = 200
 learning_rate = 1e-3
 
@@ -51,7 +56,7 @@ dataiter = iter(train_loader)
 images, labels = dataiter.next()
 
 # create grid of images
-img_grid = torchvision.utils.make_grid(images)
+img_grid = torchvision.utils.make_grid(images[:6])
 
 def imshow(img):
     img = img / 2 + 0.5  # unnormalize
@@ -67,7 +72,7 @@ writer.add_image('four_cifar10_images', inv_normalize(img_grid))
 
 
 """
-    A simple implementation of Convolutional VAE, from https://github.com/ttchengab/VAE/blob/main/VAE.py 
+    A simple implementation of Convolutional VAE, adapted from https://github.com/ttchengab/VAE/blob/main/VAE.py 
 """
 class Encoder(nn.Module):
     def __init__(self, input_channels, feature_dim=32*32, hidden_dim=hidden_dim, latent_dim=latent_dim) -> None:
@@ -101,11 +106,30 @@ class Decoder(nn.Module):
         return x_hat
 
 class VAE(nn.Module):
-    def __init__(self) -> None:
+    def __init__(self, input_channels, feature_dim=32*32, hidden_dim=hidden_dim, latent_dim=latent_dim) -> None:
         super(VAE, self).__init__()
+        self.encoder = Encoder(input_channels=input_channels, 
+                               feature_dim=feature_dim, 
+                               hidden_dim=hidden_dim, 
+                               latent_dim=latent_dim)
+        self.decoder = Decoder(input_channels=input_channels, 
+                               feature_dim=feature_dim, 
+                               hidden_dim=hidden_dim, 
+                               latent_dim=latent_dim)
 
     def forward(self, x):
-        pass
+        # Inference
+        mu, logvar = self.encoder(x)
+
+        # Reparametrisation
+        std = torch.exp(logvar/2)
+        epsilon = torch.randn_like(std) # generate eps [0,1) with dim matching std
+        z = mu + std * epsilon
+
+        # Generate
+        x_hat = self.decoder(z)
+        
+        return mu, logvar, x_hat
 
 def loss_function(x, x_hat, mu, logvar):
     reproduction_loss = F.mse_loss(x_hat, x, reduction="sum")
@@ -116,26 +140,18 @@ def loss_function(x, x_hat, mu, logvar):
 n_training_samples = len(train_dataset) # 50000
 n_iterations = math.ceil(n_training_samples/batch_size)
 
-encoder = Encoder(input_channels=3)
-decoder = Decoder(input_channels=3)
-optimiser = torch.optim.Adam(list(encoder.parameters()) + list(decoder.parameters()), lr=learning_rate)
+vae_model = VAE(input_channels=3)
+optimiser = torch.optim.Adam(vae_model.parameters(), lr=learning_rate)
 for epoch in range(num_epochs):
     overall_loss = 0
+    since = time.time()
     for i, (image, label) in enumerate(train_loader):
         #image shape 4, 3, 32, 32 -> 4, 3, 1024
 
         optimiser.zero_grad()
 
-        # Inference
-        mu, logvar = encoder(image)
-
-        # Reparametrisation
-        std = torch.exp(logvar/2)
-        epsilon = torch.randn_like(std) # generate eps [0,1) with dim matching std
-        z = mu + std * epsilon
-
-        # Generate
-        x_hat = decoder(z)
+        # VAE forward pass
+        mu, logvar, x_hat = vae_model(image)
 
         # Loss
         loss = loss_function(image, x_hat, mu, logvar)
@@ -147,32 +163,23 @@ for epoch in range(num_epochs):
         optimiser.step()
 
         if (i+1) % 5 == 0:
+            time_elapsed = time.time() - since
             #print(f"epoch: {epoch+1}/{num_epochs}, step: {i+1}/{n_iterations}, image: {image.shape}")
-            print(f"epoch: {epoch}/{num_epochs}, step: {i+1}/{n_iterations}, Avg loss: {overall_loss/(i*batch_size):.5f}")
+            print(f"epoch: {epoch+1}/{num_epochs}, step: {i+1}/{n_iterations}, Avg loss: {overall_loss/(i*batch_size):.3f}, time: {time_elapsed:.3f}")
 
-
-encoder.eval()
-decoder.eval()
+vae_model.eval()
 with torch.no_grad():
 
     # Visualise sample of images
     dataiter = iter(test_loader)
     images, _ = dataiter.next()
 
-    # Inference
-    mu, logvar = encoder(images)
-
-    # Reparametrisation
-    std = torch.exp(logvar/2)
-    epsilon = torch.randn_like(std) # generate eps [0,1) with dim matching std
-    z = mu + std * epsilon
-
-    # Generate
-    x_hat = decoder(z)
+    # VAE forward pass
+    _, _, x_hat = vae_model(images)
 
     # create grid of images
-    img_grid = torchvision.utils.make_grid(images)
-    x_hat_grid =  torchvision.utils.make_grid(x_hat)
+    img_grid = torchvision.utils.make_grid(images[:6])
+    x_hat_grid =  torchvision.utils.make_grid(x_hat[:6])
 
     def imshow(img):
         img = img / 2 + 0.5  # unnormalize
