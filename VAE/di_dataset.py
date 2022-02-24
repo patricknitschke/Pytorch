@@ -38,9 +38,9 @@ class DepthImageDataset(Dataset):
                     x_.append(image_flipped)
 
                     self.nb_images += 2
-                    if self.nb_images > 1:
+                    if self.nb_images > 5:
                         break
-                if self.nb_images > 1:
+                if self.nb_images > 5:
                     break
         
             self.x = torch.cat((self.x, torch.Tensor(np.array(x_))))
