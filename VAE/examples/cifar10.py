@@ -51,6 +51,8 @@ test_loader = DataLoader(dataset=test_dataset, batch_size=batch_size, shuffle=Fa
 
 classes = ('plane', 'car', 'bird', 'cat','deer', 'dog', 'frog', 'horse', 'ship', 'truck')
 
+print("len dataset", len(train_dataset)) # 50000
+
 # Visualise sample of images
 dataiter = iter(train_loader)
 images, labels = dataiter.next()

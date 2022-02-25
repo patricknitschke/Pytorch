@@ -39,6 +39,7 @@ test_dataset = torchvision.datasets.FashionMNIST(root='./data',
 # Data loader
 train_loader = DataLoader(dataset=train_dataset, batch_size=batch_size, shuffle=True)
 test_loader = DataLoader(dataset=test_dataset, batch_size=batch_size, shuffle=False)
+print("len dataset", len(train_dataset))
 
 """
     A simple implementation of Gaussian MLP Encoder and Decoder, from https://github.com/Jackson-Kang/Pytorch-VAE-tutorial
