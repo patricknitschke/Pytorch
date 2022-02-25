@@ -46,10 +46,10 @@ def collate_batch(batch):
 
 
 class DepthImageDataset(torch.utils.data.IterableDataset):
-    def __init__(self, tfrecord_folder):
+    def __init__(self, tfrecord_folder, batch_size=32):
         super(DepthImageDataset).__init__()
         self.tfrecord_folder = tfrecord_folder
-        self.itr = self.load_tfrecords()
+        self.itr = self.load_tfrecords(batch_size=batch_size)
 
     def read_tfrecord(self, serialized_example):
         feature_description = {
@@ -66,14 +66,16 @@ class DepthImageDataset(torch.utils.data.IterableDataset):
         depth = example['depth']
         return image, height, width, depth
 
-    def load_tfrecords(self, is_shuffle_and_repeat=True, shuffle_buffer_size=5000, prefetch_buffer_size_multiplier=2, batch_size = 32):
+    def load_tfrecords(self, is_shuffle_and_repeat=True, shuffle_buffer_size=5000, prefetch_buffer_size_multiplier=2, batch_size=32):
         print('Loading tfrecords...')
         tfrecord_fnames = get_files_ending_with(self.tfrecord_folder, '.tfrecords')
         assert len(tfrecord_fnames) > 0
         if is_shuffle_and_repeat:
             np.random.shuffle(tfrecord_fnames)
         else:
-            tfrecord_fnames = sorted(tfrecord_fnames)
+            tfrecord_fnames = sorted(tfrecord_fnames) # 176 tfrecords for train, 20 for test
+
+        tfrecord_fnames = tfrecord_fnames[:1]
 
         dataset = tf.data.TFRecordDataset(tfrecord_fnames)
         dataset = dataset.map(self.read_tfrecord, num_parallel_calls=tf.data.experimental.AUTOTUNE)
