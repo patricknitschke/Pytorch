@@ -46,10 +46,10 @@ def collate_batch(batch):
 
 
 class DepthImageDataset(torch.utils.data.IterableDataset):
-    def __init__(self, tfrecord_folder, batch_size=32):
+    def __init__(self, tfrecord_folder, batch_size=32, shuffle=True):
         super(DepthImageDataset).__init__()
         self.tfrecord_folder = tfrecord_folder
-        self.itr = self.load_tfrecords(batch_size=batch_size)
+        self.itr = self.load_tfrecords(is_shuffle_and_repeat=shuffle, batch_size=batch_size)
 
     def read_tfrecord(self, serialized_example):
         feature_description = {
