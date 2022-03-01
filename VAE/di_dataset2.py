@@ -49,7 +49,7 @@ class DepthImageDataset(torch.utils.data.IterableDataset):
     def __init__(self, tfrecord_folder, batch_size=32, shuffle=True):
         super(DepthImageDataset).__init__()
         self.tfrecord_folder = tfrecord_folder
-        self.itr, self.itr_len = self.load_tfrecords(is_shuffle_and_repeat=shuffle, batch_size=batch_size)
+        self.dataset, self.data_len = self.load_tfrecords(is_shuffle_and_repeat=shuffle, batch_size=batch_size)
 
     def read_tfrecord(self, serialized_example):
         feature_description = {
@@ -79,26 +79,24 @@ class DepthImageDataset(torch.utils.data.IterableDataset):
         print(tfrecord_fnames)
 
         dataset = tf.data.TFRecordDataset(tfrecord_fnames)
-        print(len([1 for _ in dataset]))
         dataset = dataset.map(self.read_tfrecord, num_parallel_calls=tf.data.experimental.AUTOTUNE)
         if is_shuffle_and_repeat: 
             dataset = dataset.shuffle(buffer_size=shuffle_buffer_size, reshuffle_each_iteration=True)
         dataset = dataset.batch(batch_size)
         dataset = dataset.prefetch(buffer_size=prefetch_buffer_size_multiplier * batch_size)
-        iterator = dataset.__iter__()
-        
+
         print('Iterating length...')
-        iter_len = sum(1 for _ in dataset)
-        
+        data_len = sum(1 for _ in dataset)
         print('Done.')
         
-        return iterator, iter_len
+        return dataset, data_len
     
     def __iter__(self):
-        return self.itr
+        #print("gotcha")
+        return self.dataset.__iter__()
 
     def __len__(self):
-        return self.itr_len
+        return self.data_len
 
 
 
