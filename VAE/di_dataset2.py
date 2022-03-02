@@ -92,12 +92,11 @@ class DepthImageDataset(torch.utils.data.IterableDataset):
         return dataset, data_len
     
     def __iter__(self):
-        #print("gotcha")
+        print("gotcha")
         return self.dataset.__iter__()
 
     def __len__(self):
         return self.data_len
-
 
 
 if __name__ == "__main__":
