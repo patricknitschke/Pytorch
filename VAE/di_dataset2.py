@@ -60,14 +60,14 @@ class DepthImageDataset(torch.utils.data.IterableDataset):
         }
         example = tf.io.parse_single_example(serialized_example, feature_description)
 
-        image = tf.transpose(tf.cast(tf.io.parse_tensor(example['image'], out_type = tf.uint8), tf.float32),  perm=[2, 0, 1]) / 256
+        image = tf.transpose(tf.cast(tf.io.parse_tensor(example['image'], out_type = tf.uint8), tf.float32),  perm=[2, 0, 1]) / 255.
         height = example['height']
         width = example['width']
         depth = example['depth']
         return image, height, width, depth
 
     def load_tfrecords(self, is_shuffle_and_repeat=True, shuffle_buffer_size=5000, prefetch_buffer_size_multiplier=2, batch_size=32):
-        print('Loading tfrecords...')
+        print('Loading tfrecords... ', end="\t")
         tfrecord_fnames = get_files_ending_with(self.tfrecord_folder, '.tfrecords')
         assert len(tfrecord_fnames) > 0
         if is_shuffle_and_repeat:
@@ -85,9 +85,9 @@ class DepthImageDataset(torch.utils.data.IterableDataset):
         dataset = dataset.batch(batch_size)
         dataset = dataset.prefetch(buffer_size=prefetch_buffer_size_multiplier * batch_size)
 
-        print('Iterating length...')
+        print('Iterating length... ', end="\t")
         data_len = sum(1 for _ in dataset)
-        print('Done.')
+        print('Done:', data_len)
         
         return dataset, data_len
     
