@@ -1,12 +1,8 @@
-import sys
 import tensorflow as tf
 import torch
 import numpy as np
 import skimage.io as io
-import os
 from utilities import get_files_ending_with
-
-sys.path.append('.')
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 def collate_batch(batch):
@@ -19,10 +15,10 @@ def collate_batch(batch):
     return torch.Tensor(np.array(image)).to(device), torch.Tensor(np.array(image_filtered)).to(device), torch.Tensor(np.array(height)).to(device), torch.Tensor(np.array(width)).to(device), torch.Tensor(np.array(depth)).to(device)
 
 class DepthImageDataset(torch.utils.data.IterableDataset):
-    def __init__(self, tfrecord_folder, batch_size=32, shuffle=True):
+    def __init__(self, tfrecord_folder, batch_size=32, shuffle=True, one_tfrecord=False):
         super(DepthImageDataset).__init__()
         self.tfrecord_folder = tfrecord_folder
-        self.dataset, self.data_len = self.load_tfrecords(is_shuffle_and_repeat=shuffle, batch_size=batch_size)
+        self.dataset, self.data_len = self.load_tfrecords(is_shuffle_and_repeat=shuffle, batch_size=batch_size, one_tfrecord=one_tfrecord)
 
     def read_tfrecord(self, serialized_example):
         feature_description = {
@@ -42,7 +38,7 @@ class DepthImageDataset(torch.utils.data.IterableDataset):
         
         return image, image_filtered, height, width, depth
 
-    def load_tfrecords(self, is_shuffle_and_repeat=True, shuffle_buffer_size=5000, prefetch_buffer_size_multiplier=2, batch_size=32):
+    def load_tfrecords(self, is_shuffle_and_repeat=True, shuffle_buffer_size=5000, prefetch_buffer_size_multiplier=2, batch_size=32, one_tfrecord=False):
         print('Loading tfrecords... ', end="\t")
         tfrecord_fnames = get_files_ending_with(self.tfrecord_folder, '.tfrecords')
         assert len(tfrecord_fnames) > 0
@@ -51,7 +47,8 @@ class DepthImageDataset(torch.utils.data.IterableDataset):
         else:
             tfrecord_fnames = sorted(tfrecord_fnames) # 176 tfrecords for train, 20 for test
 
-        tfrecord_fnames = tfrecord_fnames[:1]
+        if one_tfrecord:
+            tfrecord_fnames = '/Users/patricknitschke/Library/CloudStorage/OneDrive-NTNU/NTNU/Kybernetikk og robotikk/Master/Thesis/Code/rl_data/tfrecord_wfiltered/data4.tfrecords'
         print(tfrecord_fnames)
 
         dataset = tf.data.TFRecordDataset(tfrecord_fnames)
