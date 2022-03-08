@@ -1,4 +1,3 @@
-import torch
 import numpy as np
 import cv2
 import os
@@ -227,7 +226,7 @@ def filter_depth_image(image, extrapolate=True, blur_type="gaussian"):
     image_filtered = fill_in_fast(image, extrapolate=extrapolate, blur_type=blur_type, custom_kernel=FilterKernel.FULL_KERNEL_21)
     image_filtered = max_range_to_255(image_filtered)
     image_filtered = np.expand_dims(image_filtered, axis=0)
-    
+
     return image_filtered
 
 def get_files_ending_with(folder_or_folders, ext):
@@ -245,23 +244,3 @@ def get_files_ending_with(folder_or_folders, ext):
         print('folder_or_folders:', folder_or_folders)
         return list(itertools.chain(*[get_files_ending_with(folder, ext) for folder in folder_or_folders]))
 
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-def collate_batch(batch):
-    # image, actions, robot_state, collision_label, info_label, height, width, depth, action_horizon = [], [], [], [], [], [], [], [], []
-    # for _image, _actions, _robot_state, _collision_label, _info_label, _height, _width, _depth, _action_horizon in batch:
-    #     image.append(_image.numpy())
-    #     actions.append(_actions.numpy())
-    #     robot_state.append(_robot_state.numpy())
-    #     collision_label.append(_collision_label.numpy())
-    #     info_label.append(_info_label.numpy())
-    #     height.append(_height.numpy())
-    #     width.append(_width.numpy())
-    #     depth.append(_depth.numpy())
-    #     action_horizon.append(_action_horizon.numpy())
-    # print('batch[0]:', batch[0])
-    image = batch[0][0]
-    height = batch[0][1]
-    width = batch[0][2]
-    depth = batch[0][3]
-    
-    return torch.Tensor(np.array(image)).to(device), torch.Tensor(np.array(height)).to(device), torch.Tensor(np.array(width)).to(device), torch.Tensor(np.array(depth)).to(device)
