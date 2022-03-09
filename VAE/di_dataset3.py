@@ -48,7 +48,8 @@ class DepthImageDataset(torch.utils.data.IterableDataset):
             tfrecord_fnames = sorted(tfrecord_fnames) # 176 tfrecords for train, 20 for test
 
         if one_tfrecord:
-            tfrecord_fnames = '/Users/patricknitschke/Library/CloudStorage/OneDrive-NTNU/NTNU/Kybernetikk og robotikk/Master/Thesis/Code/rl_data/tfrecord_wfiltered/data4.tfrecords'
+            tfrecord_fnames = tfrecord_fnames[:1]
+            # tfrecord_fnames = '/Users/patricknitschke/Library/CloudStorage/OneDrive-NTNU/NTNU/Kybernetikk og robotikk/Master/Thesis/Code/rl_data/tfrecord_wfiltered/data4.tfrecords'
         print(tfrecord_fnames)
 
         dataset = tf.data.TFRecordDataset(tfrecord_fnames)
